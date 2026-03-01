@@ -1,0 +1,41 @@
+# render.yaml — Deploy backend to Render free tier
+# ===================================================
+# Docs: https://render.com/docs/render-yaml
+#
+# Deploy steps:
+#   1. Push this repo to GitHub
+#   2. Go to dashboard.render.com → New → Blueprint
+#   3. Connect your GitHub repo
+#   4. Render detects this file and creates the service
+#   5. Add env vars in Render dashboard (ANTHROPIC_API_KEY, etc.)
+
+services:
+  - type: web
+    name: receipt-shredder-api
+    env: python
+    region: oregon
+    plan: free         # Free tier: 512MB RAM, spins down after 15min idle
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    rootDir: backend
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false    # Enter manually in Render dashboard
+      - key: SECRET_KEY
+        generateValue: true
+      - key: FERNET_KEY
+        sync: false    # Generate and enter manually
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_ID
+        sync: false
+      - key: APP_URL
+        value: https://your-app.vercel.app
+      - key: DB_PATH
+        value: /opt/render/project/src/backend/receipt_shredder.db
+    disk:
+      name: sqlite-data
+      mountPath: /opt/render/project/src/backend
+      sizeGB: 1        # 1GB free disk for SQLite
